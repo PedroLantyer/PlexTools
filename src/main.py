@@ -58,7 +58,6 @@ def plex_sort_compare(video_a: Video, video_b: Video):
 
     return len(a) - len(b)
 
-
 def sort_target_playlist():
     pl_items: list[Video] = target_playlist.items()
     if not len(pl_items):
