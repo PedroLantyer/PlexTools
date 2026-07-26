@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from functools import cmp_to_key
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
@@ -26,12 +27,37 @@ def get_target_playlist():
         matches = [pl for pl in playlist_names if pl["title"].lower()==target_playlist_name.lower()]
         if not len(matches):
             print("No Match Found", end="\n\n")
-        if len(matches) > 1:
-            matches.sort(key=lambda x: x["addedAt"], reverse=True)
+        else:
+            if len(matches) > 1:
+                matches.sort(key=lambda x: x["addedAt"], reverse=True)
             break
 
     target_playlist: Playlist = server.fetchItem(matches[0]["id"])
     return target_playlist
+
+def plex_sort_compare(video_a: Video, video_b: Video):
+    #PLEX USES A CUSTOM SORT ORDER SO THIS IS NECESSARY
+    i = 0
+
+    a: str = video_a.title
+    b: str = video_b.title
+
+    while i < len(a) and i < len(b):
+        char_a = a[i]
+        char_b = b[i]
+
+        if char_a == char_b:
+            i+= 1
+            continue
+        
+        if char_a == "-" and char_b in [",", "&"]:
+            return -1
+        if char_b == "-" and char_a in [",", "&"]:
+            return 1
+        return ord(char_a) - ord(char_b)
+
+    return len(a) - len(b)
+
 
 def sort_target_playlist():
     pl_items: list[Video] = target_playlist.items()
@@ -41,8 +67,9 @@ def sort_target_playlist():
     if len(pl_items) == 1:
         print("Playlist only has a single element")
         exit(0)
-        
-    pl_items.sort(key=lambda x: x.title)
+
+    pl_items.sort(key=cmp_to_key(plex_sort_compare))
+
     target_playlist.moveItem(pl_items[0])
     for i in range(1, len(pl_items)):
         target_playlist.moveItem(pl_items[i], after=pl_items[i-1])
