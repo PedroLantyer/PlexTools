@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from functools import cmp_to_key
+import pandas as pd
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
@@ -91,6 +92,58 @@ def connect_to_server():
         print("Failed to connect to PLEX Server\nExiting")
         exit(1)
 
+def remove_duplicate_playlists():
+    global playlists, playlist_names
+
+    #FIND DUPES
+    df = pd.DataFrame(playlist_names)
+    df = df[df.duplicated(subset=["title"], keep=False)]
+
+    if not len(df):
+        print("No duplicates found")
+        return
+    
+    df = df.sort_values(by="addedAt")
+    df = df[df.duplicated(subset=["title"], keep="last")]
+    df = df.sort_values(by="title")
+    dupes = df.to_dict(orient="records")
+    #FIND DUPES
+
+    #PRINT TABLE WITH DUPLICATES
+    print(f"{len(dupes)} Duplicates found:")
+    with pd.option_context("display.max_rows", None):
+        print(df, end="\n\n")
+    #PRINT TABLE WITH DUPLICATES
+
+    #REMOVE DUPLICATE ELEMENTS
+    print("Removing duplicates")
+    removed_positions: set[int] = set()
+    for i, dupe in enumerate(dupes):
+        this_pl: Playlist = playlists[dupe["pos"]]
+
+        if this_pl.title != dupe["title"] or this_pl.ratingKey != dupe["id"]:
+            continue
+        else:
+            removed_positions.add(dupe["pos"])
+            print(f"Removing: {this_pl.title}")
+            this_pl.delete()
+            print(f"Progress: {i+1} / {len(dupes)}")
+    #REMOVE DUPLICATE ELEMENTS
+
+    #UPDATE PLAYLISTS LIST
+    temp = []
+    for i in range(len(playlists)):
+        if i not in removed_positions:
+            temp.append(playlists[i])
+
+    playlists = temp
+    playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat(), "pos": i} for i, pl in enumerate(playlists)]
+    #UPDATE PLAYLISTS LIST
+    print("Duplicates Removed!")
+
+
+        
+
 if __name__ == "__main__":
     load_dotenv()
     PLEX_URL = os.getenv("PLEX_URL")
@@ -106,7 +159,11 @@ if __name__ == "__main__":
     selected_section: LibrarySection = lib.sectionByID(target_section_id)
 
     playlists: list[Playlist] = selected_section.playlists()
-    playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat()} for pl in playlists]
+    playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat(), "pos": i} for i, pl in enumerate(playlists)]
+
+
+    remove_duplicate_playlists()
+    exit(0)
 
     target_playlist: Playlist = get_target_playlist()
     sort_target_playlist()
