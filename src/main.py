@@ -2,13 +2,15 @@ import os
 from dotenv import load_dotenv
 from functools import cmp_to_key
 import pandas as pd
+from typing import cast, Literal
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
 from plexapi.video import Video
+from plexapi.audio import Artist, Album, Track
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 
-def get_target_section_id():
+def get_target_section_id() -> int:
     print("Sections available:")
     for section in sections:
         print(section["title"])
@@ -22,7 +24,7 @@ def get_target_section_id():
             else:
                 return match[0]["id"]
 
-def get_target_playlist():
+def get_target_playlist() -> Playlist:
     while(True):
         target_playlist_name = input("Insert Target Playlist Name: ").strip()
         matches = [pl for pl in playlist_names if pl["title"].lower()==target_playlist_name.lower()]
@@ -141,6 +143,22 @@ def remove_duplicate_playlists():
     #UPDATE PLAYLISTS LIST
     print("Duplicates Removed!")
 
+def sort_audio_tracks_for_all_artists():
+    for artist in artist_names:
+            this_artist: Artist = artists[artist["pos"]]
+            print(f"Sorting for artist: {this_artist.title}")
+            albums: list[Album] = this_artist.albums()
+    
+            for album in albums:
+                print(f"Sorting album: {album.title}")
+                tracks: list[Track] = album.tracks()
+                track_list = [{"title": track.title, "id": track.ratingKey, "pos": i} for i, track in enumerate(tracks)]
+                track_list.sort(key=lambda t: t["title"])
+    
+                for i, track in enumerate(track_list):
+                    tracks[cast(int, track["pos"])].editTrackNumber(trackNumber=i)
+    print("Finished sorting audio tracks")
+
 if __name__ == "__main__":
     load_dotenv()
     PLEX_URL = os.getenv("PLEX_URL")
@@ -153,13 +171,22 @@ if __name__ == "__main__":
     sections.sort(key=lambda x: x["title"])
 
     target_section_id = get_target_section_id()
-    selected_section: LibrarySection = lib.sectionByID(target_section_id)
+    selected_section: LibrarySection = cast(LibrarySection, lib.sectionByID(target_section_id))
+    section_type = cast(Literal["movie", "photo", "show", "artist"], selected_section.type)
 
-    playlists: list[Playlist] = selected_section.playlists()
-    playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat(), "pos": i} for i, pl in enumerate(playlists)]
+    match(section_type):
+        case "movie":
+            playlists: list[Playlist] = selected_section.playlists()
+            playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat(), "pos": i} for i, pl in enumerate(playlists)]
 
-    remove_duplicate_playlists()
+            remove_duplicate_playlists()
+            target_playlist: Playlist = get_target_playlist()
+            sort_target_playlist()
 
-    target_playlist: Playlist = get_target_playlist()
-    sort_target_playlist()
-    
+        case "artist":
+            artists: list[Artist] = selected_section.all()
+            artist_names = [{"name": artist.title, "id": artist.ratingKey, "pos": i} for i, artist in enumerate(artists)]
+            sort_audio_tracks_for_all_artists() 
+
+        case _:
+            print("No utilities for photo and show libraries")
