@@ -1,12 +1,10 @@
 import os
-import pandas as pd
 from dotenv import load_dotenv
 from typing import cast, Literal
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
-from plexapi.video import Video
-from plexapi.audio import Artist, Album, Track
+from plexapi.audio import Artist
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 from music import Artist_Data, sort_audio_tracks_for_all_artists
 from playlist import  Playlist_Data, remove_duplicate_playlists, get_target_playlist, sort_target_video_playlist
