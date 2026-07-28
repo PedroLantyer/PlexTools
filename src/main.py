@@ -141,9 +141,6 @@ def remove_duplicate_playlists():
     #UPDATE PLAYLISTS LIST
     print("Duplicates Removed!")
 
-
-        
-
 if __name__ == "__main__":
     load_dotenv()
     PLEX_URL = os.getenv("PLEX_URL")
@@ -161,9 +158,7 @@ if __name__ == "__main__":
     playlists: list[Playlist] = selected_section.playlists()
     playlist_names = [{"title": pl.title,"id": pl.ratingKey, "addedAt": pl.addedAt.isoformat(), "pos": i} for i, pl in enumerate(playlists)]
 
-
     remove_duplicate_playlists()
-    exit(0)
 
     target_playlist: Playlist = get_target_playlist()
     sort_target_playlist()
