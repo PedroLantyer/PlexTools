@@ -7,7 +7,8 @@ from plexapi.playlist import Playlist
 from plexapi.audio import Artist
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 from music import Artist_Data, sort_audio_tracks_for_all_artists
-from playlist import  Playlist_Data, remove_duplicate_playlists, get_target_playlist, sort_target_video_playlist
+from playlist import *
+from json_utils import *
 
 def get_target_section_id() -> int:
     print("Sections available:")
@@ -16,8 +17,8 @@ def get_target_section_id() -> int:
     print("\n")
     
     while(True):
-            selected_section_title = input("Insert Target Section Title: ").strip()
-            match = [section for section in sections if section["title"].lower()==selected_section_title.lower()]
+            selected_section_title = input("Insert Target Section Title: ").strip().lower()
+            match = [section for section in sections if section["title"].lower()==selected_section_title]
             if not len(match):
                 print("Section not found", end="\n\n")
             else:
@@ -39,6 +40,30 @@ def connect_to_server():
         print("Failed to connect to PLEX Server\nExiting")
         exit(1)
 
+def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON"]:
+    while True:
+        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON"]
+
+        print("SELECT CHOSEN TASK")
+        for i, task in enumerate(task_options, 1):
+            print(f"{i} - {task}")
+        print("0 - EXIT")
+
+        option_chosen = input("Chosen Option: ").strip()
+        if not len(option_chosen):
+            print("Couldn't Understand. Try again", end="\n\n")
+        else:
+            try:
+                fp = float(option_chosen)
+                option = int(fp)
+                if option == 0:
+                    return "EXIT"
+                if option >= 1 and option <= len(task_options):
+                    return task_options[option - 1]
+                print("Couldn't Understand. Try again", end="\n\n")
+            except:
+                print("Couldn't Understand. Try again", end="\n\n")          
+
 if __name__ == "__main__":
     load_dotenv()
     PLEX_URL = os.getenv("PLEX_URL")
@@ -51,7 +76,7 @@ if __name__ == "__main__":
     sections.sort(key=lambda x: x["title"])
 
     target_section_id = get_target_section_id()
-    selected_section: LibrarySection = cast(LibrarySection, lib.sectionByID(target_section_id))
+    selected_section = cast(LibrarySection, lib.sectionByID(target_section_id))
     section_type = cast(Literal["movie", "photo", "show", "artist"], selected_section.type)
 
     match(section_type):
@@ -65,10 +90,39 @@ if __name__ == "__main__":
             sort_target_video_playlist(target_playlist)
 
         case "artist":
-            artists: list[Artist] = selected_section.all()
-            data_for_artists = [Artist_Data(artist, pos=i) for i, artist in enumerate(artists)]
+            task = get_artist_task()
+            match(task):
+                case "Sort tracks for all artists":
+                    artists: list[Artist] = selected_section.all()
+                    data_for_artists = [Artist_Data(artist, pos=i) for i, artist in enumerate(artists)]
+                    sort_audio_tracks_for_all_artists(artists, data_for_artists)
 
-            sort_audio_tracks_for_all_artists(artists, data_for_artists) 
+                case "Save playlist item data to JSON":
+                    playlists: list[Playlist] = selected_section.playlists()
+                                
+                    data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
+                    data_for_playlists.sort(key= lambda pl: pl.title)
+                                
+                    for playlist in data_for_playlists:
+                        playlist.print_playlist_data()
+                    print("\n")
+                                
+                    target_playlist = get_target_playlist(server, data_for_playlists)
+                    save_path = pick_json_save_path(target_playlist.title)
+                    save_playlist_items_to_json(target_playlist, save_path)
+
+                case "Add playlist from JSON":
+                    file_path = get_json_file_path()
+
+                    if file_path is not None:
+                        items = get_playlist_items_from_json(file_path)
+                        if items is not None:
+                            playlist_name = file_path.stem
+                            tracks = get_items_based_on_json(server, items)
+                            server.createPlaylist(title=playlist_name, items=tracks)
+                            print("Playlist Created")
 
         case _:
             print("No utilities for photo and show libraries")
+
+    print("Goodbye")

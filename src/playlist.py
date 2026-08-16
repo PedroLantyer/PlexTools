@@ -1,8 +1,14 @@
+import pathlib
+import json
 import pandas as pd
+from datetime import datetime
+from typing import cast
 from functools import cmp_to_key
 from plexapi.playlist import Playlist
+from plexapi.audio import Track
 from plexapi.video import Video
 from plexapi.server import PlexServer
+from music import Track_Data
 
 class Playlist_Data:
     title: str
@@ -16,8 +22,25 @@ class Playlist_Data:
         self.addedAt = playlist.addedAt.isoformat()
         self.pos = pos
 
+    def print_playlist_data(self):
+        print(f"Title: {self.title} | ID: {self.id} | Added At: {self.addedAt}")
+
+def get_target_playlist_id(playlists: list[Playlist]):
+    print("Playlists available:")
+    for pl in playlists:
+        print(pl.title)
+    print("\n")
+
+    while True:
+            selected_playlist_title = input("Insert Target Playlist Title: ").strip().lower()
+            match = [pl for pl in playlists if pl.title.lower()==selected_playlist_title]
+            if not len(match):
+                print("Playlist not found", end="\n\n")
+            else:
+                return match[0].ratingKey
+
 def remove_duplicate_playlists(playlists: list[Playlist], data_for_playlists: list[Playlist_Data]):
-    #FIND DUPES
+    # FIND DUPES
     df = pd.DataFrame([vars(playlist) for playlist in data_for_playlists])
     df = df[df.duplicated(subset=["title"], keep=False)]
 
@@ -29,15 +52,15 @@ def remove_duplicate_playlists(playlists: list[Playlist], data_for_playlists: li
     df = df[df.duplicated(subset=["title"], keep="last")]
     df = df.sort_values(by="title")
     dupes = df.to_dict(orient="records")
-    #FIND DUPES
+    # FIND DUPES
 
-    #PRINT TABLE WITH DUPLICATES
+    # PRINT TABLE WITH DUPLICATES
     print(f"{len(dupes)} Duplicates found:")
     with pd.option_context("display.max_rows", None):
         print(df, end="\n\n")
-    #PRINT TABLE WITH DUPLICATES
+    # PRINT TABLE WITH DUPLICATES
 
-    #REMOVE DUPLICATE ELEMENTS
+    # REMOVE DUPLICATE ELEMENTS
     print("Removing duplicates")
     removed_positions: set[int] = set()
     for i, dupe in enumerate(dupes):
@@ -66,9 +89,9 @@ def remove_duplicate_playlists(playlists: list[Playlist], data_for_playlists: li
     return (playlists, data_for_playlists)
 
 def get_target_playlist(server: PlexServer, data_for_playlists: list[Playlist_Data]) -> Playlist:
-    while(True):
-        target_playlist_name = input("Insert Target Playlist Name: ").strip()
-        matches = [pl for pl in data_for_playlists if pl.title.lower()==target_playlist_name.lower()]
+    while True:
+        target_playlist_name = input("Insert Target Playlist Name: ").strip().lower()
+        matches = [pl for pl in data_for_playlists if pl.title.lower()==target_playlist_name]
         if not len(matches):
             print("No Match Found", end="\n\n")
         else:
@@ -106,15 +129,54 @@ def sort_target_video_playlist(target_playlist: Playlist):
     pl_items: list[Video] = target_playlist.items()
     if not len(pl_items):
         print("Playlist is empty")
-        exit(0)
-    if len(pl_items) == 1:
+
+    elif len(pl_items) == 1:
         print("Playlist only has a single element")
-        exit(0)
 
-    pl_items.sort(key=cmp_to_key(plex_sort_compare))
+    else:
+        pl_items.sort(key=cmp_to_key(plex_sort_compare))
 
-    target_playlist.moveItem(pl_items[0])
-    for i in range(1, len(pl_items)):
-        target_playlist.moveItem(pl_items[i], after=pl_items[i-1])
+        target_playlist.moveItem(pl_items[0])
+        for i in range(1, len(pl_items)):
+            target_playlist.moveItem(pl_items[i], after=pl_items[i-1])
 
-    print("Playlist Sorted!")
+        print("Playlist Sorted!")
+
+def save_playlist_items_to_json(target_playlist: Playlist, save_path: pathlib.Path=pathlib.Path.home()):
+    pl_items = cast(list[Track], target_playlist.items())
+    if not len(pl_items):
+        print("Playlist is empty")
+        return 
+
+    data_for_items: list[Track_Data] = []
+    for pos, item in enumerate(pl_items):
+        data = Track_Data(item, pos)
+        data_for_items.append(data)
+        
+        with open(save_path, "w", encoding="utf-8") as file:
+            json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
+    
+    print(f"Wrote playlist items to {save_path}")
+
+    """ for pos, item in enumerate(pl_items):
+        data = Track_Data(item, pos)
+        data_for_items.append(data)
+
+        target_file_name = f"{target_playlist.title}_{int(datetime.now().timestamp())}.json"
+        target_file_path = pathlib.Path.joinpath(save_path, target_file_name)
+
+    if pathlib.Path.exists(target_file_path):
+        print(f"File {target_file_name} already exists. Overwrite?")
+
+        while True:
+            selected_option = input(f"Press \"Y\" for Yes or \"N\" for No").strip().lower()
+            if selected_option == 'n':
+                exit(0)
+            if selected_option == 'y':
+                break
+            print("Couldn't understand. Try again")
+    
+    with open(target_file_path, "w", encoding="utf-8") as file:
+        json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
+
+    print(f"Wrote playlist items to {target_file_path}") """
