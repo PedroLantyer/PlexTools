@@ -28,7 +28,6 @@ def get_playlist_items_from_json(file_path: str):
     try:
         with open(file_path, "r") as file:
             content = cast(list[dict], json.load(file))
-            #items_for_new_playlist: list[dict] = []   
             items_for_new_playlist: list[Track_Data_From_JSON] = []   
 
             if bool(content) and isinstance(content, list) and all(isinstance(e, dict) for e in content): # Checks if content of the JSON is a list of dicts that is not empty
@@ -36,7 +35,6 @@ def get_playlist_items_from_json(file_path: str):
                     lower_case_keys = set(item.keys())
                     if not {"id", "title"}.issubset(lower_case_keys):
                         raise Exception("Invalid keys for JSON. JSON needs to include the attributes \"id\" and \"title\" for each object")
-                    #items_for_new_playlist.append({"id": int(item["id"]), "title": item["title"]})
                     items_for_new_playlist.append(Track_Data_From_JSON(title=item["title"], id=int(item["id"])))
                 return items_for_new_playlist
             else:
@@ -63,6 +61,7 @@ def get_items_based_on_json(server: PlexServer, metadata_for_tracks: list[Track_
             print(err)
 
     """
+    PENDING:    
     ids_found = set([item.ratingKey for item in items])
     mismatches = [metadata for metadata in metadata_for_tracks if metadata["id"] in ids_found]
 
