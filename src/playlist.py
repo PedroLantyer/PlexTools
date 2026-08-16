@@ -157,26 +157,3 @@ def save_playlist_items_to_json(target_playlist: Playlist, save_path: pathlib.Pa
             json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
     
     print(f"Wrote playlist items to {save_path}")
-
-    """ for pos, item in enumerate(pl_items):
-        data = Track_Data(item, pos)
-        data_for_items.append(data)
-
-        target_file_name = f"{target_playlist.title}_{int(datetime.now().timestamp())}.json"
-        target_file_path = pathlib.Path.joinpath(save_path, target_file_name)
-
-    if pathlib.Path.exists(target_file_path):
-        print(f"File {target_file_name} already exists. Overwrite?")
-
-        while True:
-            selected_option = input(f"Press \"Y\" for Yes or \"N\" for No").strip().lower()
-            if selected_option == 'n':
-                exit(0)
-            if selected_option == 'y':
-                break
-            print("Couldn't understand. Try again")
-    
-    with open(target_file_path, "w", encoding="utf-8") as file:
-        json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
-
-    print(f"Wrote playlist items to {target_file_path}") """
