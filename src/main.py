@@ -5,6 +5,7 @@ from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
 from plexapi.audio import Artist
+from plexapi.video import Movie
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 from music import Artist_Data, sort_audio_tracks_for_all_artists
 from playlist import *
@@ -63,6 +64,20 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
                 print("Couldn't Understand. Try again", end="\n\n")
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
+
+def get_all_videos_in_last_two_hours():
+    videos = cast(list[Movie], selected_section.all())
+    min_date = datetime.fromtimestamp(int(datetime.now().timestamp()) - 7200)
+    videos_in_time_range = [video for video in videos if video.addedAt >= min_date]
+    videos_in_time_range.sort(key=lambda v: v.title)
+    
+    file_data: list[dict] = [{"title": video.title, "path": video.locations[0]} for video in videos_in_time_range if len(video.locations)]
+    print(f"Found {len(videos_in_time_range)} Videos")
+    
+    save_path = pick_json_save_path(default_name="Videos")
+    with open(save_path, "w", encoding="utf-8") as json_file:
+        json.dump(file_data, json_file, indent=4)
+    print(f"Wrote File List To JSON at \"{save_path}\"")
 
 if __name__ == "__main__":
     load_dotenv()

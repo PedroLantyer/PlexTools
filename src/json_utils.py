@@ -78,7 +78,7 @@ def get_items_based_on_json(server: PlexServer, metadata_for_tracks: list[Track_
 
     return items
 
-def pick_json_save_path(default_name: str = ""):
+def pick_json_save_path(default_name: str = "") -> pathlib.Path:
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
