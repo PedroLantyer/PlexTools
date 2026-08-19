@@ -66,9 +66,9 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON"]:
+def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist"]:
     while True:
-        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON"]
+        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -155,7 +155,16 @@ if __name__ == "__main__":
                                 playlists: list[Playlist] = selected_section.playlists()
                                 data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
                                 print(f"Playlist \"{playlist_name}\" Created")
-                                
+
+                    case "Duplicate Playlist":
+                        target_playlist = get_target_playlist(server=server, data_for_playlists=data_for_playlists)
+                        videos_in_playlist: Video = target_playlist.items()
+                        if videos_in_playlist is not None:
+                            server.createPlaylist(title=target_playlist.title, items=videos_in_playlist)
+                            playlists: list[Playlist] = selected_section.playlists()
+                            data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
+                            print(f"Playlist \"{target_playlist.title}\" Duplicated")
+                            
                     case _:
                         break
 
