@@ -129,6 +129,8 @@ if __name__ == "__main__":
                 task = get_video_task()
                 match task:
                     case "Remove Duplicate Playlists":
+                        playlists: list[Playlist] = selected_section.playlists()
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
                         playlists, data_for_playlists = remove_duplicate_playlists(playlists, data_for_playlists)
                         playlists: list[Playlist] = selected_section.playlists()
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
