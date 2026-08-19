@@ -1,7 +1,7 @@
 import pathlib
 import json
 import pandas as pd
-from datetime import datetime
+from typing import Literal
 from typing import cast
 from functools import cmp_to_key
 from plexapi.playlist import Playlist
@@ -9,6 +9,7 @@ from plexapi.audio import Track
 from plexapi.video import Video
 from plexapi.server import PlexServer
 from music import Track_Data
+from movie import Movie_Data
 
 class Playlist_Data:
     title: str
@@ -142,18 +143,28 @@ def sort_target_video_playlist(target_playlist: Playlist):
 
         print("Playlist Sorted!")
 
-def save_playlist_items_to_json(target_playlist: Playlist, save_path: pathlib.Path=pathlib.Path.home()):
-    pl_items = cast(list[Track], target_playlist.items())
-    if not len(pl_items):
-        print("Playlist is empty")
-        return 
-
-    data_for_items: list[Track_Data] = []
-    for pos, item in enumerate(pl_items):
-        data = Track_Data(item, pos)
-        data_for_items.append(data)
+def save_playlist_items_to_json(target_playlist: Playlist, item_type: Literal["video", "music"], save_path: pathlib.Path=pathlib.Path.home()):
+    try:
+        if item_type not in ["video", "music"]:
+            raise Exception("Invalid value for item type")
         
-        with open(save_path, "w", encoding="utf-8") as file:
-            json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
-    
-    print(f"Wrote playlist items to {save_path}")
+        pl_items = cast(list[Track | Video], target_playlist.items())
+        if not len(pl_items):
+            print("Playlist is empty")
+            return 
+
+        data_for_items: list[Track_Data | Movie_Data] = []
+        for pos, item in enumerate(pl_items):
+            match item_type:
+                case "music":
+                    data = Track_Data(item, pos)
+                case "video":
+                    data = Movie_Data(item)
+            data_for_items.append(data)
+            
+            with open(save_path, "w", encoding="utf-8") as file:
+                json.dump([item.to_dict(False) for item in data_for_items], file, indent=4)
+        
+        print(f"Wrote playlist items to {save_path}")
+    except Exception as err:
+        print(err)
