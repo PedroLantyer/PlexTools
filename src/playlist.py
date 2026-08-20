@@ -126,6 +126,23 @@ def plex_sort_compare(video_a: Video, video_b: Video):
 
     return len(a) - len(b)
 
+def chronologically_sort_target_audio_playlist(target_playlist: Playlist, newest_to_oldest: bool = True):
+    pl_items = cast(list[Track], target_playlist.items())
+    if not len(pl_items):
+            print("Playlist is empty")
+    
+    elif len(pl_items) == 1:
+        print("Playlist only has a single element")
+    
+    else:
+        pl_items.sort(key= lambda t: (-t.addedAt.timestamp() if newest_to_oldest else t.addedAt.timestamp(), t.title)) # I don't use custom sort order for audio tracks.
+
+        target_playlist.moveItem(pl_items[0])
+        for i in range(1, len(pl_items)):
+            target_playlist.moveItem(pl_items[i], after=pl_items[i-1])
+
+        print("Playlist Sorted!")
+
 def sort_target_video_playlist(target_playlist: Playlist):
     pl_items: list[Video] = target_playlist.items()
     if not len(pl_items):

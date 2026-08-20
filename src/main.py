@@ -42,9 +42,9 @@ def connect_to_server():
         print("Failed to connect to PLEX Server\nExiting")
         exit(1)
 
-def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON"]:
+def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At"]:
     while True:
-        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON"]
+        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -179,6 +179,7 @@ if __name__ == "__main__":
                         data_for_artists = [Artist_Data(artist, pos=i) for i, artist in enumerate(artists)]
                         sort_audio_tracks_for_all_artists(artists, data_for_artists)
 
+
                     case "Save playlist item data to JSON":
                         playlists: list[Playlist] = selected_section.playlists()
                                     
@@ -203,6 +204,19 @@ if __name__ == "__main__":
                                 tracks = get_items_based_on_json(server, items)
                                 server.createPlaylist(title=playlist_name, items=tracks)
                                 print(f"Playlist \"{playlist_name}\" Created")
+
+                    case "Sort Playlist By Added At":
+                        playlists: list[Playlist] = selected_section.playlists()
+
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
+                        data_for_playlists.sort(key= lambda pl: pl.title)
+
+                        for playlist in data_for_playlists:
+                            playlist.print_playlist_data()
+                        print("\n")
+                        
+                        target_playlist = get_target_playlist(server, data_for_playlists)
+                        chronologically_sort_target_audio_playlist(target_playlist)
 
                     case _:
                         break
