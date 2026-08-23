@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-from typing import cast, Literal
+from typing import cast, Literal, TypedDict
+from datetime import datetime
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
@@ -66,9 +67,9 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist"]:
+def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists"]:
     while True:
-        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist"]
+        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -90,7 +91,6 @@ def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-
 def get_all_videos_in_last_two_hours():
     videos = cast(list[Movie], selected_section.all())
     min_date = datetime.fromtimestamp(int(datetime.now().timestamp()) - 7200)
@@ -100,7 +100,7 @@ def get_all_videos_in_last_two_hours():
     file_data: list[dict] = [{"title": video.title, "path": video.locations[0]} for video in videos_in_time_range if len(video.locations)]
     print(f"Found {len(videos_in_time_range)} Videos")
     
-    save_path = pick_json_save_path(default_name="Videos")
+    save_path = get_json_save_path(default_name="Videos")
     with open(save_path, "w", encoding="utf-8") as json_file:
         json.dump(file_data, json_file, indent=4)
     print(f"Wrote File List To JSON at \"{save_path}\"")
@@ -142,7 +142,7 @@ if __name__ == "__main__":
                     case "Save playlist item data to JSON":
                         target_playlist = get_target_playlist(server=server, data_for_playlists=data_for_playlists)
                         videos_in_playlist: Video = target_playlist.items()
-                        save_path = pick_json_save_path(target_playlist.title)
+                        save_path = get_json_save_path(target_playlist.title)
                         save_playlist_items_to_json(target_playlist, "video", save_path)
 
                     case "Add playlist from JSON":
@@ -166,7 +166,16 @@ if __name__ == "__main__":
                             playlists: list[Playlist] = selected_section.playlists()
                             data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
                             print(f"Playlist \"{target_playlist.title}\" Duplicated")
-                            
+
+                    case "Get list of Playlists":
+                        playlists: list[Playlist] = cast(list[Playlist], selected_section.playlists())
+                        if not playlists:
+                            print("No Playlists Found")
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
+
+                        get_list_of_playlists(data_for_playlists)
+
+
                     case _:
                         break
 
@@ -191,7 +200,7 @@ if __name__ == "__main__":
                         print("\n")
                                     
                         target_playlist = get_target_playlist(server, data_for_playlists)
-                        save_path = pick_json_save_path(target_playlist.title)
+                        save_path = get_json_save_path(target_playlist.title)
                         save_playlist_items_to_json(target_playlist, "music", save_path)
 
                     case "Add playlist from JSON":

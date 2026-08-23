@@ -78,12 +78,12 @@ def get_items_based_on_json(server: PlexServer, metadata_for_tracks: list[Track_
 
     return items
 
-def pick_json_save_path(default_name: str = "") -> pathlib.Path:
+def get_json_save_path(default_name: str = "", extension: str = ".json", filetype_description:str = "JSON files") -> pathlib.Path:
     root = tk.Tk()
     root.withdraw()
     root.attributes("-topmost", True)
 
-    save_path = filedialog.asksaveasfilename(initialfile=default_name, defaultextension=".json", filetypes=[("JSON files", "*.json")])
+    save_path = filedialog.asksaveasfilename(initialfile=default_name, defaultextension=extension, filetypes=[(filetype_description, extension)])
     root.destroy()
 
     if not len(save_path):
@@ -93,7 +93,7 @@ def pick_json_save_path(default_name: str = "") -> pathlib.Path:
         if pathlib.Path.exists(dl_path):
             save_path = dl_path
 
-        save_path = save_path.joinpath("Untitled.json")
+        save_path = save_path.joinpath(f"Untitled{extension}")
         print(f"Since no path was defined, file was saved to:\n{save_path}")
 
     return save_path

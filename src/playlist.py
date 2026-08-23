@@ -10,6 +10,8 @@ from plexapi.video import Video
 from plexapi.server import PlexServer
 from music import Track_Data
 from movie import Movie_Data
+from json_utils import get_json_save_path
+from sorting_utils import get_sort_mode
 
 class Playlist_Data:
     title: str
@@ -185,3 +187,14 @@ def save_playlist_items_to_json(target_playlist: Playlist, item_type: Literal["v
         print(f"Wrote playlist items to {save_path}")
     except Exception as err:
         print(err)
+
+def get_list_of_playlists(data_for_playlists: list[Playlist]):
+    sort_mode = get_sort_mode()
+    data_for_playlists.sort(key=lambda pl: getattr(pl, sort_mode["key"]) , reverse=sort_mode["descending"])
+
+    
+    
+    pl_names = [f"{pl.title}\n" for pl in data_for_playlists]
+    save_path = get_json_save_path(default_name="Playlists", extension=".txt", filetype_description="txt file")
+    with open(save_path, "w", encoding="utf-8") as file:
+        file.writelines(pl_names)
