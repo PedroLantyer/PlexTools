@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
-from typing import cast, Literal, TypedDict
+from typing import cast, Literal
 from datetime import datetime
+from time import sleep
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
@@ -136,14 +137,24 @@ if __name__ == "__main__":
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
                     case "Sort Playlist":
-                        target_playlist: Playlist = get_target_playlist(server, data_for_playlists)
-                        sort_target_video_playlist(target_playlist)
+                        target_playlist = get_target_playlist(server, data_for_playlists)
+
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+                        
+                        for playlist in target_playlist:
+                            sort_target_video_playlist(playlist)
 
                     case "Save playlist item data to JSON":
                         target_playlist = get_target_playlist(server=server, data_for_playlists=data_for_playlists)
-                        videos_in_playlist: Video = target_playlist.items()
-                        save_path = get_json_save_path(target_playlist.title)
-                        save_playlist_items_to_json(target_playlist, "video", save_path)
+
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+
+                        for playlist in target_playlist:
+                            videos_in_playlist: Video = playlist.items()
+                            save_path = get_json_save_path(playlist.title)
+                            save_playlist_items_to_json(playlist, "video", save_path)
 
                     case "Add playlist from JSON":
                         file_path = get_json_file_path()
@@ -160,12 +171,20 @@ if __name__ == "__main__":
 
                     case "Duplicate Playlist":
                         target_playlist = get_target_playlist(server=server, data_for_playlists=data_for_playlists)
-                        videos_in_playlist: Video = target_playlist.items()
-                        if videos_in_playlist is not None:
-                            server.createPlaylist(title=target_playlist.title, items=videos_in_playlist)
-                            playlists: list[Playlist] = selected_section.playlists()
-                            data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
-                            print(f"Playlist \"{target_playlist.title}\" Duplicated")
+                        
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+
+                        for i, playlist in enumerate(target_playlist):
+                            videos_in_playlist: Video = playlist.items()
+                            if videos_in_playlist is not None:
+                                if i:
+                                    sleep(1) # Plex only stores seconds in it's DB so a 1 second delay between each addition is necessary to maintain the correct order
+                                server.createPlaylist(title=playlist.title, items=videos_in_playlist)
+                                print(f"Playlist \"{playlist.title}\" Duplicated")
+
+                        playlists: list[Playlist] = selected_section.playlists()
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
                     case "Get list of Playlists":
                         playlists: list[Playlist] = cast(list[Playlist], selected_section.playlists())
@@ -200,8 +219,13 @@ if __name__ == "__main__":
                         print("\n")
                                     
                         target_playlist = get_target_playlist(server, data_for_playlists)
-                        save_path = get_json_save_path(target_playlist.title)
-                        save_playlist_items_to_json(target_playlist, "music", save_path)
+
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+
+                        for playlist in target_playlist:
+                            save_path = get_json_save_path(playlist.title)
+                            save_playlist_items_to_json(playlist, "music", save_path)
 
                     case "Add playlist from JSON":
                         file_path = get_json_file_path()
@@ -225,7 +249,12 @@ if __name__ == "__main__":
                         print("\n")
                         
                         target_playlist = get_target_playlist(server, data_for_playlists)
-                        chronologically_sort_target_audio_playlist(target_playlist)
+
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+                        
+                        for playlist in target_playlist:
+                            chronologically_sort_target_audio_playlist(target_playlist)
 
                     case _:
                         break

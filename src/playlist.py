@@ -1,8 +1,8 @@
 import pathlib
 import json
 import pandas as pd
-from typing import Literal
-from typing import cast
+import ast
+from typing import Literal, cast
 from functools import cmp_to_key
 from plexapi.playlist import Playlist
 from plexapi.audio import Track
@@ -91,19 +91,54 @@ def remove_duplicate_playlists(playlists: list[Playlist], data_for_playlists: li
     print("Duplicates Removed!")
     return (playlists, data_for_playlists)
 
-def get_target_playlist(server: PlexServer, data_for_playlists: list[Playlist_Data]) -> Playlist:
+def get_target_playlist(server: PlexServer, data_for_playlists: list[Playlist_Data]):
+    for i in range(len(data_for_playlists)):
+        data_for_playlists[i].title = data_for_playlists[i].title.lower()
+    
     while True:
         target_playlist_name = input("Insert Target Playlist Name: ").strip().lower()
-        matches = [pl for pl in data_for_playlists if pl.title.lower()==target_playlist_name]
-        if not len(matches):
-            print("No Match Found", end="\n\n")
-        else:
-            if len(matches) > 1:
-                matches.sort(key=lambda x: x.addedAt, reverse=True)
-            break
 
-    target_playlist: Playlist = server.fetchItem(matches[0].id)
-    return target_playlist
+        # This either manages to turn the input into a list or it just defaults the parsed value to an empty string so that it fails the verification on isinstance
+        try:
+            parsed = ast.literal_eval(target_playlist_name)
+        except ValueError, SyntaxError:
+            parsed = ""
+
+        if isinstance(parsed, list):
+            target_playlists: list[Playlist] = []
+            target_playlist_name = cast(list[str], parsed)
+            lower_case_names = [pl.lower() for pl in target_playlist_name]
+
+            all_matches: list[Playlist_Data] = []
+
+            for name in lower_case_names:
+                matches = [pl for pl in data_for_playlists if pl.title==name]
+
+                if not matches:
+                    print("One ore more elements of the list have no match", end="\n\n")
+                    all_matches = []
+                    break
+                else:
+                    if len(matches) > 1:
+                        matches.sort(key=lambda x: x.addedAt, reverse=True)
+                    all_matches.append(matches[0])
+
+            if all_matches:
+                all_matches.reverse()
+                for match in all_matches:
+                    target_playlists.append(server.fetchItem(match.id))
+                return target_playlists
+
+        else:
+            matches = [pl for pl in data_for_playlists if pl.title==target_playlist_name]
+            if not len(matches):
+                print("No Match Found", end="\n\n")
+            else:
+                if len(matches) > 1:
+                    matches.sort(key=lambda x: x.addedAt, reverse=True)
+                target_playlist: Playlist = server.fetchItem(matches[0].id)
+                return target_playlist
+    
 
 def plex_sort_compare(video_a: Video, video_b: Video):
     #PLEX USES A CUSTOM SORT ORDER SO THIS IS NECESSARY
