@@ -37,7 +37,7 @@ def get_target_playlist_id(playlists: list[Playlist]):
     while True:
             selected_playlist_title = input("Insert Target Playlist Title: ").strip().lower()
             match = [pl for pl in playlists if pl.title.lower()==selected_playlist_title]
-            if not len(match):
+            if not match:
                 print("Playlist not found", end="\n\n")
             else:
                 return match[0].ratingKey
@@ -116,6 +116,7 @@ def get_target_playlist(server: PlexServer, data_for_playlists: list[Playlist_Da
 
                 if not matches:
                     print("One ore more elements of the list have no match", end="\n\n")
+                    print(f"Not matched: {name}")
                     all_matches = []
                     break
                 else:

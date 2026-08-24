@@ -23,7 +23,7 @@ def get_target_section_id() -> int:
     while(True):
             selected_section_title = input("Insert Target Section Title: ").strip().lower()
             match = [section for section in sections if section["title"].lower()==selected_section_title]
-            if not len(match):
+            if match:
                 print("Section not found", end="\n\n")
             else:
                 return match[0]["id"]
@@ -68,9 +68,9 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists"]:
+def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists"]:
     while True:
-        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists"]
+        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -121,7 +121,7 @@ if __name__ == "__main__":
     selected_section = cast(LibrarySection, lib.sectionByID(target_section_id))
     section_type = cast(Literal["movie", "photo", "show", "artist"], selected_section.type)
 
-    match(section_type):
+    match section_type:
         case "movie":
             playlists: list[Playlist] = selected_section.playlists()
             data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
@@ -159,9 +159,9 @@ if __name__ == "__main__":
                     case "Add playlist from JSON":
                         file_path = get_json_file_path()
 
-                        if file_path is not None:
+                        if file_path:
                             items = get_playlist_items_from_json(file_path)
-                            if items is not None:
+                            if items:
                                 playlist_name = file_path.stem
                                 videos = get_items_based_on_json(server, items)
                                 server.createPlaylist(title=playlist_name, items=videos)
@@ -187,12 +187,16 @@ if __name__ == "__main__":
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
                     case "Get list of Playlists":
-                        playlists: list[Playlist] = cast(list[Playlist], selected_section.playlists())
+                        playlists = cast(list[Playlist], selected_section.playlists())
                         if not playlists:
                             print("No Playlists Found")
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
                         get_list_of_playlists(data_for_playlists)
+
+                    case "Refetch Playlists":
+                        playlists: list[Playlist] = selected_section.playlists()
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
 
                     case _:
@@ -201,7 +205,7 @@ if __name__ == "__main__":
         case "artist":
             while True:
                 task = get_artist_task()
-                match(task):
+                match task:
                     case "Sort tracks for all artists":
                         artists: list[Artist] = selected_section.all()
                         data_for_artists = [Artist_Data(artist, pos=i) for i, artist in enumerate(artists)]
@@ -230,7 +234,7 @@ if __name__ == "__main__":
                     case "Add playlist from JSON":
                         file_path = get_json_file_path()
 
-                        if file_path is not None:
+                        if file_path:
                             items = get_playlist_items_from_json(file_path)
                             if items is not None:
                                 playlist_name = file_path.stem

@@ -20,7 +20,7 @@ def get_json_file_path():
     file_path = filedialog.askopenfilename(title="Select JSON file", filetypes=[("JSON files", "*.json")])
     root.destroy()
 
-    if not len(file_path):
+    if not file_path:
         return None
     return pathlib.Path(file_path)
 
@@ -86,11 +86,11 @@ def get_json_save_path(default_name: str = "", extension: str = ".json", filetyp
     save_path = filedialog.asksaveasfilename(initialfile=default_name, defaultextension=extension, filetypes=[(filetype_description, extension)])
     root.destroy()
 
-    if not len(save_path):
+    if not save_path:
         save_path = pathlib.Path.home()
         dl_path = save_path.joinpath("Downloads")
 
-        if pathlib.Path.exists(dl_path):
+        if dl_path.exists():
             save_path = dl_path
 
         save_path = save_path.joinpath(f"Untitled{extension}")
