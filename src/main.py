@@ -23,7 +23,7 @@ def get_target_section_id() -> int:
     while(True):
             selected_section_title = input("Insert Target Section Title: ").strip().lower()
             match = [section for section in sections if section["title"].lower()==selected_section_title]
-            if match:
+            if not match:
                 print("Section not found", end="\n\n")
             else:
                 return match[0]["id"]
