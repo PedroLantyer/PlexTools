@@ -285,7 +285,7 @@ if __name__ == "__main__":
                             target_playlist = [target_playlist]
                         
                         for playlist in target_playlist:
-                            chronologically_sort_target_audio_playlist(target_playlist)
+                            chronologically_sort_target_audio_playlist(playlist)
 
                     case _:
                         break
