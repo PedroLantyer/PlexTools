@@ -111,7 +111,9 @@ if __name__ == "__main__":
     PLEX_URL = os.getenv("PLEX_URL")
     PLEX_TOKEN = os.getenv("PLEX_TOKEN")
 
+    print(f"Connecting to PLEX Server. Please wait")
     server = connect_to_server()
+    print(f"Connected to PLEX Server at: {PLEX_URL}", end="\n\n")
     lib: Library = server.library
 
     sections = [{"id": sect.key, "title": sect.title, "type": sect.type} for sect in lib.sections()]

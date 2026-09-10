@@ -32,7 +32,6 @@ def get_sort_mode(type: Literal["video", "music"] = "video"):
                 fp = float(option_chosen)
                 choice = int(fp)
                 if choice >= 1 and choice <= len(options):
-                    print("GOT HERE")
                     selected_sort = options[choice-1]
                     break
                 print("Couldn't Understand. Try again", end="\n\n")
