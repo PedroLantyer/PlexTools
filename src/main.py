@@ -68,9 +68,9 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists"]:
+def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters"]:
     while True:
-        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists"]
+        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -182,11 +182,13 @@ if __name__ == "__main__":
                                 playlists_from_json: list[dict] = json.load(file)
 
                             playlists_from_json.reverse()
-                            for i, pl in enumerate(playlists_from_json):
-                                if i:
+                            pl_count = len(playlists_from_json)
+                            for i, pl in enumerate(playlists_from_json, 1):
+                                if i > 1:
                                     sleep(1)
-                                server.createPlaylist(title=pl["title"], smart=True, section=selected_section, sort=pl["sort"], filters=pl["filters"])
+                                server.createPlaylist(title=pl["title"], smart=True, section=selected_section, sort=pl["filters"].get("sort", ["movie.titleSort"]), filters=pl["filters"]["filters"])
                                 print(f"Smart Playlist \"{pl["title"]}\" Created")
+                                print(f"Progress: {i}/{pl_count}")
 
                         playlists: list[Playlist] = selected_section.playlists()
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
@@ -227,6 +229,23 @@ if __name__ == "__main__":
                         playlists: list[Playlist] = selected_section.playlists()
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
+                    case "Export Smart Playlist Filters":
+                        save_path = get_json_save_path("Smart Playlist Filters")
+
+                        playlists: list[Playlist] = selected_section.playlists()
+                        smart_playlists: list[Playlist] = [pl for pl in playlists if pl.smart]
+                        smart_playlist_count = len(smart_playlists)
+
+                        filters_for_playlists = []
+                        
+                        for i, pl in enumerate(smart_playlists, 1):
+                            d = {"title": pl.title, "filters": pl.filters()}
+                            print(f"Got Filter For playlist: {pl.title}")
+                            print(f"Progress: {i}/{smart_playlist_count}")
+                            filters_for_playlists.append(d)
+
+                        with open(save_path, "w", encoding="utf-8") as file:
+                            json.dump(filters_for_playlists, file, indent=4)
 
                     case _:
                         break

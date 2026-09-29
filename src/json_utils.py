@@ -50,13 +50,15 @@ def get_playlist_items_from_json(file_path: str):
 
 def get_items_based_on_json(server: PlexServer, metadata_for_tracks: list[Track_Data_From_JSON]):
     items: list[Track | Video] = []
-    for metadata in metadata_for_tracks:
+    item_count = len(metadata_for_tracks)
+    for i, metadata in enumerate(metadata_for_tracks, 1):
         try: 
             item = cast(Track | Video, server.fetchItem(metadata["id"]))
             items.append(item)
+            print(f"Added item: {item.title}")
+            print(f"Progress: {i}/{item_count}")
         except NotFound:
             print(f"WARNING: {metadata["title"]} not found in server")
-            items.append()
         except Exception as err:
             print(err)
 
