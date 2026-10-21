@@ -6,7 +6,7 @@ from time import sleep
 from plexapi.server import PlexServer
 from plexapi.library import Library, LibrarySection
 from plexapi.playlist import Playlist
-from plexapi.audio import Artist
+from plexapi.audio import Artist, Album
 from plexapi.video import Movie
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 from music import Artist_Data, sort_audio_tracks_for_all_artists
@@ -44,9 +44,9 @@ def connect_to_server():
         print("Failed to connect to PLEX Server\nExiting")
         exit(1)
 
-def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At"]:
+def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]:
     while True:
-        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At"]
+        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -307,6 +307,37 @@ if __name__ == "__main__":
                         
                         for playlist in target_playlist:
                             chronologically_sort_target_audio_playlist(playlist)
+
+                    case "Get Tracks For Artist":
+                        artists: list[Artist] = selected_section.all()
+                        data_for_artists = [Artist_Data(artist, pos=i) for i, artist in enumerate(artists)]
+
+                        target_artist = None
+                        while True:
+                            target_name = input("Insert target artist name: ").strip().lower()
+                            for artist in data_for_artists:
+                                if target_name==artist.name.lower():
+                                    target_artist=artists[artist.pos]
+                                    print(artist.id)
+                            
+                            if target_artist:
+                                break
+
+                        tracks_for_artist: list[Track] = target_artist.tracks()
+                        track_list: list[dict] = []
+                        for track in tracks_for_artist:
+                            temp_album = cast(Album | None, track.album())
+                            this_album = temp_album.title if temp_album else ""
+
+                            temp_artist = cast(Artist | None, track.artist())
+                            this_artist = temp_artist.title if temp_artist else ""
+
+                            track_list.append({"id": track.ratingKey, "title": track.title, "album": this_album, "artist": this_artist, "addedAt": track.addedAt.isoformat()})
+
+                        if track_list:
+                            save_path = get_json_save_path(target_name.title)
+                            with open(save_path, "w", encoding="utf-8") as file:
+                                json.dump(track_list, file, indent=4)
 
                     case _:
                         break

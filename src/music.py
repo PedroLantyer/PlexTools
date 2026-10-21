@@ -48,5 +48,3 @@ def sort_audio_tracks_for_all_artists(artists: list[Artist], data_for_artists: l
     
                for i, track in enumerate(track_list):
                     tracks[track.pos].editTrackNumber(trackNumber=i+1)
-
-    print("Finished sorting audio tracks")
