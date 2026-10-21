@@ -8,7 +8,7 @@ from plexapi.playlist import Playlist
 from plexapi.audio import Track
 from plexapi.video import Video
 from plexapi.server import PlexServer
-from music import Track_Data
+from music import Track_Data, Track_Data_From_JSON
 from movie import Movie_Data
 from json_utils import get_json_save_path
 from sorting_utils import get_sort_mode
@@ -228,8 +228,6 @@ def get_list_of_playlists(data_for_playlists: list[Playlist]):
     sort_mode = get_sort_mode()
     data_for_playlists.sort(key=lambda pl: getattr(pl, sort_mode["key"]) , reverse=sort_mode["descending"])
 
-    
-    
     pl_names = [f"{pl.title}\n" for pl in data_for_playlists]
     save_path = get_json_save_path(default_name="Playlists", extension=".txt", filetype_description="txt file")
     with open(save_path, "w", encoding="utf-8") as file:

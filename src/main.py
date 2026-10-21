@@ -44,9 +44,9 @@ def connect_to_server():
         print("Failed to connect to PLEX Server\nExiting")
         exit(1)
 
-def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]:
+def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Add Tracks To Playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]:
     while True:
-        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]
+        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Add Tracks To Playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(task_options, 1):
@@ -289,6 +289,29 @@ if __name__ == "__main__":
                                 tracks = get_items_based_on_json(server, items)
                                 server.createPlaylist(title=playlist_name, items=tracks)
                                 print(f"Playlist \"{playlist_name}\" Created")
+
+                    case "Add Tracks To Playlist from JSON":
+                        playlists: list[Playlist] = selected_section.playlists()
+                                                            
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
+                        data_for_playlists.sort(key= lambda pl: pl.title)
+                                                            
+                        for playlist in data_for_playlists:
+                            playlist.print_playlist_data()
+                        print("\n")
+                                                            
+                        target_playlist = get_target_playlist(server, data_for_playlists)
+
+                        if isinstance(target_playlist, Playlist):
+                            target_playlist = [target_playlist]
+
+                        for playlist in target_playlist:
+                            file_path = get_json_file_path()
+                            if file_path:
+                                items = get_playlist_items_from_json(file_path)
+                                if items is not None:
+                                    tracks = get_items_based_on_json(server, items)
+                                    playlist.addItems(tracks)
 
                     case "Sort Playlist By Added At":
                         playlists: list[Playlist] = selected_section.playlists()
