@@ -1,4 +1,4 @@
-from typing import Literal, cast, TypedDict
+from typing import Literal, TypedDict
 
 VIDEO_SORT_KEYS = Literal["title", "addedAt"]
 MUSIC_SORT_KEYS = Literal["title", "artist", "album", "addedAt"]
@@ -8,8 +8,8 @@ class SortMode(TypedDict):
     descending: bool
 
 def get_sort_mode(type: Literal["video", "music"] = "video"):
-    VIDEO_OPTIONS = ["TITLE ASC", "TITLE DESC", "ADDED_AT ASC", "ADDED_AT DESC"]
-    MUSIC_OPTIONS = ["TITLE ASC", "TITLE DESC", "ARTIST ASC", "ARTIST DESC", "ALBUM ASC", "ALBUM DESC", "ADDED_AT ASC", "ADDED_AT DESC"]
+    VIDEO_OPTIONS = ("TITLE ASC", "TITLE DESC", "ADDED_AT ASC", "ADDED_AT DESC")
+    MUSIC_OPTIONS = ("TITLE ASC", "TITLE DESC", "ARTIST ASC", "ARTIST DESC", "ALBUM ASC", "ALBUM DESC", "ADDED_AT ASC", "ADDED_AT DESC")
 
     match type:
         case "video":

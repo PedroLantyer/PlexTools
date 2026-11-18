@@ -10,7 +10,7 @@ from plexapi.audio import Artist, Album
 from plexapi.video import Movie
 from plexapi.exceptions import Unauthorized, NotFound, BadRequest
 from music import Artist_Data, sort_audio_tracks_for_all_artists
-from movie import Movie_Data
+#from movie import Movie_Data
 from playlist import *
 from json_utils import *
 
@@ -46,10 +46,10 @@ def connect_to_server():
 
 def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Add Tracks To Playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]:
     while True:
-        task_options = ["Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Add Tracks To Playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist"]
+        TASK_OPTIONS = ("Sort tracks for all artists", "Save playlist item data to JSON", "Add playlist from JSON", "Add Tracks To Playlist from JSON", "Sort Playlist By Added At", "Get Tracks For Artist")
 
         print("SELECT CHOSEN TASK")
-        for i, task in enumerate(task_options, 1):
+        for i, task in enumerate(TASK_OPTIONS, 1):
             print(f"{i} - {task}")
         print("0 - EXIT")
 
@@ -62,18 +62,18 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
                 option = int(fp)
                 if option == 0:
                     return "EXIT"
-                if option >= 1 and option <= len(task_options):
-                    return task_options[option - 1]
+                if option >= 1 and option <= len(TASK_OPTIONS):
+                    return TASK_OPTIONS[option - 1]
                 print("Couldn't Understand. Try again", end="\n\n")
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
 def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters"]:
     while True:
-        task_options = ["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters"]
+        TASK_OPTIONS = ("Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters")
 
         print("SELECT CHOSEN TASK")
-        for i, task in enumerate(task_options, 1):
+        for i, task in enumerate(TASK_OPTIONS, 1):
             print(f"{i} - {task}")
         print("0 - EXIT")
 
@@ -86,8 +86,8 @@ def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "
                 option = int(fp)
                 if option == 0:
                     return "EXIT"
-                if option >= 1 and option <= len(task_options):
-                    return task_options[option - 1]
+                if option >= 1 and option <= len(TASK_OPTIONS):
+                    return TASK_OPTIONS[option - 1]
                 print("Couldn't Understand. Try again", end="\n\n")
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
@@ -199,20 +199,21 @@ if __name__ == "__main__":
                         if isinstance(target_playlist, Playlist):
                             target_playlist = [target_playlist]
 
+                        playlist_count = len(target_playlist)
                         for i, playlist in enumerate(target_playlist):
                             if playlist.smart:
                                 filters: dict = playlist.filters()
                                 if i:
                                     sleep(1)
                                 server.createPlaylist(title=playlist.title, section=selected_section, smart=True, sort=filters.get("sort"), filters=filters.get("filters"))
-                                print(f"Playlist \"{playlist.title}\" Duplicated")
+                                print(f"Playlist \"{playlist.title}\" Duplicated | Progress: {i+1}/{playlist_count}")
                             else:
                                 videos_in_playlist: Video = playlist.items()
                                 if videos_in_playlist is not None:
                                     if i:
                                         sleep(1) # Plex only stores seconds in it's DB so a 1 second delay between each addition is necessary to maintain the correct order
                                     server.createPlaylist(title=playlist.title, items=videos_in_playlist)
-                                    print(f"Playlist \"{playlist.title}\" Duplicated")
+                                    print(f"Playlist \"{playlist.title}\" Duplicated | Progress: {i+1}/{playlist_count}")
 
                         playlists: list[Playlist] = selected_section.playlists()
                         data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
