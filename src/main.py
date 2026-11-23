@@ -1,4 +1,4 @@
-import os
+import os, re
 from dotenv import load_dotenv
 from typing import cast, Literal
 from datetime import datetime
@@ -68,9 +68,9 @@ def get_artist_task() -> Literal["Sort tracks for all artists", "Save playlist i
             except:
                 print("Couldn't Understand. Try again", end="\n\n")          
 
-def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters"]:
+def get_video_task() -> Literal["Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters", "Batch Rename Playlists"]:
     while True:
-        TASK_OPTIONS = ("Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters")
+        TASK_OPTIONS = ("Remove Duplicate Playlists", "Sort Playlist", "Save playlist item data to JSON", "Add playlist from JSON", "Add Smart Playlists From JSON", "Duplicate Playlist", "Get list of Playlists", "Refetch Playlists", "Export Smart Playlist Filters", "Batch Rename Playlists")
 
         print("SELECT CHOSEN TASK")
         for i, task in enumerate(TASK_OPTIONS, 1):
@@ -247,6 +247,27 @@ if __name__ == "__main__":
 
                         with open(save_path, "w", encoding="utf-8") as file:
                             json.dump(filters_for_playlists, file, indent=4)
+
+                    case "Batch Rename Playlists":
+                        playlists: list[Playlist] = selected_section.playlists()
+
+                        pattern = input("Insert the regex pattern to be replaced: ")
+                        replacement = input("Insert the replacement text: ")
+
+                        matches = [pl for pl in playlists if re.match(pattern, pl.title)]
+                        match_count = len(matches)
+
+                        for i, pl in enumerate(matches, 1):
+                            try:
+                                new_title = re.sub(pattern, replacement, pl.title)
+                                print(f"RENAMED! OLD TITLE: {pl.title} | NEW TITLE: {new_title} | PROGRESS: {i}/{match_count}")
+                                pl.editTitle(new_title)
+                            except Exception as err:
+                                print(err)
+                                print(f"Failed to rename {pl.title}")
+
+                        playlists: list[Playlist] = selected_section.playlists()
+                        data_for_playlists = [Playlist_Data(playlist, pos=i) for i, playlist in enumerate(playlists)]
 
                     case _:
                         break
